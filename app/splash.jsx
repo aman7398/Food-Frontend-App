@@ -1,13 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Image, Animated } from 'react-native';
-import * as SplashScreen from 'expo-splash-screen';
-import { useRouter } from 'expo-router';
+import * as SplashScreenModule from 'expo-splash-screen';
+import Home from './home';
 import Brand from '../assets/brand.png'; // Apna logo replace karo
 
-SplashScreen.preventAutoHideAsync();
+SplashScreenModule.preventAutoHideAsync();
 
 export default function Splash() {
-  const router = useRouter();
+  const [showHome, setShowHome] = useState(false);
   const translateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -19,16 +19,19 @@ export default function Splash() {
       ])
     ).start();
 
-    // 3 seconds ke baad redirect to login
+    // 3 seconds ke baad home page show karo
     const timer = setTimeout(async () => {
-      console.log("this is the app")
-      await SplashScreen.hideAsync();
-      router.replace('/login');
-      // console.log("i am fine")
+      console.log("Loading home page")
+      await SplashScreenModule.hideAsync();
+      setShowHome(true);
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [router]);
+  }, []);
+
+  if (showHome) {
+    return <Home />;
+  }
 
   return (
     <View style={styles.container}>

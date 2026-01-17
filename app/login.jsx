@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Ionicons } from "@expo/vector-icons";
 import {
   View,
   Text,
@@ -7,179 +6,119 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import { useRouter } from "expo-router";
 
-const LoginScreen = ({ navigation }) => {
-  const router = useRouter();
+export default function LoginScreen({ onNavigateHome }) {
   const [email, setEmail] = useState("");
-  const [errors, setErrors] = useState({});
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const validateForm = () => {
-    let valid = true;
-    let newErrors = {};
-
-    // Email empty
-    if (!email.trim()) {
-      newErrors.email = "Email is required";
-      valid = false;
-    }
-
-    // Email format
-    else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Enter a valid email";
-      valid = false;
-    }
-
-    // Password empty
-    if (!password) {
-      newErrors.password = "Password is required";
-      valid = false;
-    }
-
-    // Password length
-    else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-      valid = false;
-    }
-
-    setErrors(newErrors);
-    return valid;
-  };
-
   const handleLogin = () => {
-    if (validateForm()) {
-      router.replace("/Catalog");
+    if (email && password) {
+      console.log("Login pressed with email:", email);
+      if (onNavigateHome) {
+        onNavigateHome();
+      }
+    } else {
+      alert("Please enter email and password");
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back 👋</Text>
-      <Text style={styles.subtitle}>Login to continue</Text>
+      <Text style={styles.title}>Login</Text>
 
       <TextInput
-        placeholder="hello@gmail.com"
-        style={[styles.input, errors.email && { borderColor: "red" }]}
+        style={styles.input}
+        placeholder="Email"
         value={email}
-        onChangeText={(text) => {
-          setEmail(text);
-          setErrors({ ...errors, email: null });
-        }}
+        onChangeText={setEmail}
         keyboardType="email-address"
       />
 
-      {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-
-      <View
-        style={[
-          styles.passwordContainer,
-          errors.password && { borderColor: "red" },
-        ]}
-      >
+      <View style={styles.passwordContainer}>
         <TextInput
-          placeholder="Password"
           style={styles.passwordInput}
+          placeholder="Password"
           value={password}
-          onChangeText={(text) => {
-            setPassword(text);
-            setErrors({ ...errors, password: null });
-          }}
+          onChangeText={setPassword}
           secureTextEntry={!showPassword}
         />
-
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Ionicons
-            name={showPassword ? "eye-off" : "eye"}
-            size={22}
-            color="#777"
-          />
+          <Text style={styles.togglePassword}>{showPassword ? "Hide" : "Show"}</Text>
         </TouchableOpacity>
       </View>
 
-      {errors.password && (
-        <Text style={styles.errorText}>{errors.password}</Text>
-      )}
-
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TouchableOpacity
+        style={styles.loginButton}
+        onPress={handleLogin}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.loginText}>Login</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/signup")}>
-        <Text style={styles.link}>Don’t have an account? Sign Up</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push("/forgotpassword")}>
-        <Text style={styles.link}>Forget Password</Text>
-      </TouchableOpacity>
+      <Text style={styles.signupText}>
+        Dont have account? <Text style={styles.link}>Sign Up</Text>
+      </Text>
     </View>
   );
-};
-
-export default LoginScreen;
+}
 
 const styles = StyleSheet.create({
-  errorText: {
-    color: "red",
-    fontSize: 12,
-    marginBottom: 8,
-    marginLeft: 4,
-  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
     justifyContent: "center",
-    padding: 24,
+    alignItems: "center",
+    padding: 20,
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#000",
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#777",
-    marginBottom: 24,
+    marginBottom: 30,
   },
   input: {
-    height: 50,
     borderWidth: 1,
     borderColor: "#ddd",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    marginBottom: 14,
-  },
-  button: {
-    backgroundColor: "#E53935", 
-    height: 50,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginVertical: 10,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  link: {
-    textAlign: "center",
-    color: "#E53935",
-    marginTop: 12,
+    padding: 12,
+    marginBottom: 15,
+    borderRadius: 8,
+    width: "100%",
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#ddd",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    height: 50,
-    marginBottom: 14,
+    borderRadius: 8,
+    marginBottom: 15,
   },
   passwordInput: {
     flex: 1,
-    height: "100%",
+    padding: 12,
+  },
+  togglePassword: {
+    paddingRight: 10,
+    color: "#ff6347",
+  },
+  loginButton: {
+    backgroundColor: "#ff6347",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 20,
+    width: "100%",
+  },
+  loginText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  signupText: {
+    marginTop: 20,
+    color: "#666",
+  },
+  link: {
+    color: "#ff6347",
+    fontWeight: "bold",
   },
 });
