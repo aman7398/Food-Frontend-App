@@ -52,7 +52,7 @@ export default function App() {
     }
 
     if (currentScreen === 'home') {
-        return <Home navigateTo={navigateToLogin} />;
+        return <Home onLogout={navigateToLogin} />;
     }
 
     if (currentScreen === 'login') {
