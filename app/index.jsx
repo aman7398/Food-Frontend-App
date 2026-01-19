@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, Animated } from 'react-native';
 import * as SplashScreenModule from 'expo-splash-screen';
-import Home from './home';
+import Home from './home.jsx';
 import Login from './login';
 import Brand from '../assets/brand.png';
 
@@ -10,7 +10,6 @@ SplashScreenModule.preventAutoHideAsync();
 export default function App() {
     const [currentScreen, setCurrentScreen] = useState('splash'); // splash, home, login
     const translateY = useRef(new Animated.Value(0)).current;
-
     useEffect(() => {
         if (currentScreen === 'splash') {
             // Logo bounce animation
@@ -20,23 +19,19 @@ export default function App() {
                     Animated.timing(translateY, { toValue: 0, duration: 800, useNativeDriver: true }),
                 ])
             ).start();
-
             // 3 seconds ke baad home page show karo
             const timer = setTimeout(async () => {
                 console.log("Loading home page");
                 await SplashScreenModule.hideAsync();
                 setCurrentScreen('home');
             }, 3000);
-
             return () => clearTimeout(timer);
         }
     }, [currentScreen, translateY]);
-
     const navigateToLogin = useCallback(() => {
         console.log("navigateToLogin called");
         setCurrentScreen('login');
     }, []);
-
     const navigateToHome = useCallback(() => {
         console.log("navigateToHome called");
         setCurrentScreen('home');

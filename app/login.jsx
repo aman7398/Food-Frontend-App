@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 
-export default function LoginScreen({ onNavigateHome }) {
+export default function LoginScreen({ onNavigateHome, onNavigateSignup }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +20,13 @@ export default function LoginScreen({ onNavigateHome }) {
       }
     } else {
       alert("Please enter email and password");
+    }
+  };
+
+  const handleSignupClick = () => {
+    console.log("Navigate to signup");
+    if (onNavigateSignup) {
+      onNavigateSignup();
     }
   };
 
@@ -56,9 +63,11 @@ export default function LoginScreen({ onNavigateHome }) {
         <Text style={styles.loginText}>Login</Text>
       </TouchableOpacity>
 
-      <Text style={styles.signupText}>
-        Dont have account? <Text style={styles.link}>Sign Up</Text>
-      </Text>
+      <TouchableOpacity onPress={handleSignupClick}>
+        <Text style={styles.signupText}>
+          Dont have account? <Text style={styles.link}>Sign Up</Text>
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }

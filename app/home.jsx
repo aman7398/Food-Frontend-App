@@ -1,12 +1,18 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 
 export default function Home({ onLogout }) {
   const handleLogout = () => {
     console.log("Logout button pressed");
+
     if (onLogout) {
-      console.log("Calling onLogout callback");
-      onLogout();
+      onLogout(); // 👈 App.js me navigateToLogin call hoga
     } else {
       console.log("onLogout callback not available");
     }
@@ -38,6 +44,7 @@ export default function Home({ onLogout }) {
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   scrollContainer: {

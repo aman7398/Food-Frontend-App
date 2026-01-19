@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 
-const SignupScreen = ({ navigation }) => {
+const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -57,7 +57,21 @@ const SignupScreen = ({ navigation }) => {
 
   const handleSignUp = () => {
     if (validateForm()) {
-      router.replace("/login");
+      console.log("Sign up successful");
+      if (onNavigateHome) {
+        onNavigateHome();
+      } else {
+        router.replace("/login");
+      }
+    }
+  };
+
+  const handleBackToLogin = () => {
+    console.log("Navigate back to login");
+    if (onNavigateLogin) {
+      onNavigateLogin();
+    } else {
+      router.push("/login");
     }
   };
 
@@ -111,7 +125,7 @@ const SignupScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
           <Ionicons
             name={showPassword ? "eye-off" : "eye"}
-            size={22}
+            size={22} handleBackToLogin
             color="#777"
           />
         </TouchableOpacity>
@@ -125,7 +139,7 @@ const SignupScreen = ({ navigation }) => {
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/login")}>
+      <TouchableOpacity onPress={handleBackToLogin}>
         <Text style={styles.link}>Already have an account? Login</Text>
       </TouchableOpacity>
     </View>
