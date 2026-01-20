@@ -10,96 +10,183 @@ import {
 export default function Home({ onLogout }) {
   const handleLogout = () => {
     console.log("Logout button pressed");
-
-    if (onLogout) {
-      onLogout(); // 👈 App.js me navigateToLogin call hoga
-    } else {
-      console.log("onLogout callback not available");
-    }
+    if (onLogout) onLogout();
   };
 
   return (
-    <ScrollView style={styles.scrollContainer}>
+    <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
-        <Text style={styles.title}>🍔 Foodie</Text>
-        <Text style={styles.subtitle}>Welcome to our restaurant</Text>
 
-        <View style={styles.contentBox}>
-          <Text style={styles.contentTitle}>Featured Dishes</Text>
-          <Text style={styles.dishItem}>🍕 Margherita Pizza</Text>
-          <Text style={styles.dishItem}>🍔 Cheese Burger</Text>
-          <Text style={styles.dishItem}>🍜 Noodles</Text>
-          <Text style={styles.dishItem}>🍗 Fried Chicken</Text>
-          <Text style={styles.dishItem}>🍱 Biryani</Text>
+        {/* Top Header */}
+        <View style={styles.header}>
+          <Text style={styles.logo}>🍔 Foodie</Text>
+          <TouchableOpacity onPress={handleLogout}>
+            <Text style={styles.logout}>Logout</Text>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleLogout}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.buttonText}>Logout</Text>
-        </TouchableOpacity>
+        {/* Menu Tabs */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.menuTabs}>
+          <Text style={[styles.tab, styles.activeTab]}>All</Text>
+          <Text style={styles.tab}>Pizza</Text>
+          <Text style={styles.tab}>Burger</Text>
+          <Text style={styles.tab}>Biryani</Text>
+          <Text style={styles.tab}>Chinese</Text>
+          <Text style={styles.tab}>Desserts</Text>
+        </ScrollView>
+
+        {/* Offer Banner */}
+        <View style={styles.banner}>
+          <Text style={styles.bannerTitle}>🔥 Flat 30% OFF</Text>
+          <Text style={styles.bannerSub}>On your first order</Text>
+        </View>
+
+        {/* Section */}
+        <Text style={styles.sectionTitle}>Popular Near You</Text>
+
+        {/* Food Cards */}
+        <View style={styles.foodCard}>
+          <View>
+            <Text style={styles.foodName}>🍱 Chicken Biryani</Text>
+            <Text style={styles.foodDesc}>Spicy • Bestseller</Text>
+            <Text style={styles.foodPrice}>₹199</Text>
+          </View>
+        </View>
+
+        <View style={styles.foodCard}>
+          <View>
+            <Text style={styles.foodName}>🍔 Cheese Burger</Text>
+            <Text style={styles.foodDesc}>Juicy • Loaded Cheese</Text>
+            <Text style={styles.foodPrice}>₹149</Text>
+          </View>
+        </View>
+
+        <View style={styles.foodCard}>
+          <View>
+            <Text style={styles.foodName}>🍕 Margherita Pizza</Text>
+            <Text style={styles.foodDesc}>Classic • Fresh Cheese</Text>
+            <Text style={styles.foodPrice}>₹249</Text>
+          </View>
+        </View>
+
+        <View style={styles.foodCard}>
+          <View>
+            <Text style={styles.foodName}>🍜 Veg Hakka Noodles</Text>
+            <Text style={styles.foodDesc}>Chinese • Medium Spicy</Text>
+            <Text style={styles.foodPrice}>₹129</Text>
+          </View>
+        </View>
+
+        <View style={styles.foodCard}>
+          <View>
+            <Text style={styles.foodName}>🍗 Fried Chicken</Text>
+            <Text style={styles.foodDesc}>Crispy • Hot</Text>
+            <Text style={styles.foodPrice}>₹179</Text>
+          </View>
+        </View>
+
       </View>
     </ScrollView>
   );
 }
 
 
+
+
 const styles = StyleSheet.create({
-  scrollContainer: {
+  scroll: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F6F6F6",
   },
   container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    justifyContent: "center",
+    padding: 16,
+  },
+
+  /* Header */
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    padding: 20,
-    minHeight: "100%",
+    marginBottom: 15,
   },
-  title: {
-    fontSize: 32,
+  logo: {
+    fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 8,
-    color: "#ff6347",
+    color: "#E53935",
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#777",
-    marginBottom: 30,
+  logout: {
+    fontSize: 14,
+    color: "#E53935",
+    fontWeight: "600",
   },
-  contentBox: {
-    backgroundColor: "#f5f5f5",
+
+  /* Menu Tabs */
+  menuTabs: {
+    marginBottom: 20,
+  },
+  tab: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
+    fontSize: 14,
+    color: "#555",
+  },
+  activeTab: {
+    backgroundColor: "#E53935",
+    color: "#fff",
+  },
+
+  /* Banner */
+  banner: {
+    backgroundColor: "#E53935",
+    borderRadius: 14,
     padding: 20,
-    borderRadius: 12,
-    marginBottom: 30,
-    width: "100%",
+    marginBottom: 25,
   },
-  contentTitle: {
+  bannerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  bannerSub: {
+    fontSize: 14,
+    color: "#FFECEC",
+    marginTop: 6,
+  },
+
+  /* Section */
+  sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 15,
     color: "#333",
   },
-  dishItem: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 8,
-    paddingLeft: 10,
+
+  /* Food Card */
+  foodCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 15,
+    marginBottom: 12,
+    elevation: 2,
   },
-  button: {
-    backgroundColor: "#E53935",
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 10,
-    width: "100%",
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
+  foodName: {
     fontSize: 16,
     fontWeight: "bold",
+    color: "#222",
+  },
+  foodDesc: {
+    fontSize: 12,
+    color: "#777",
+    marginVertical: 6,
+  },
+  foodPrice: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "#E53935",
   },
 });
+
+
