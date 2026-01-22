@@ -1,15 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Image, Animated } from 'react-native';
 import * as SplashScreenModule from 'expo-splash-screen';
-import Home from './home';
-import LoginScreen from './login';
-import SignupScreen from './signup';
-import Brand from '../assets/brand.png'; // Apna logo replace karo
+import App from './index'; // Import the full app with navigation
+import Brand from '../assets/brand.png';
 
 SplashScreenModule.preventAutoHideAsync();
 
 export default function Splash() {
-  const [currentPage, setCurrentPage] = useState('splash'); // 'splash', 'login', 'signup', 'home'
+  const [showApp, setShowApp] = useState(false);
   const translateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -21,11 +19,11 @@ export default function Splash() {
       ])
     ).start();
 
-    // 3 seconds ke baad login page show karo
+    // 3 seconds ke baad home page show karo
     const timer = setTimeout(async () => {
-      console.log("Loading login page")
+      console.log("Loading app")
       await SplashScreenModule.hideAsync();
-      setCurrentPage('login');
+      setShowApp(true);
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -33,47 +31,39 @@ export default function Splash() {
 
   const handleLoginNavigateHome = () => {
     console.log("User logged in, navigating to home");
-    setCurrentPage('home');
+    setShowApp(true);
   };
 
   const handleLoginNavigateSignup = () => {
     console.log("User navigating to signup");
-    setCurrentPage('signup');
   };
 
   const handleSignupNavigateHome = () => {
     console.log("User signed up, navigating to home");
-    setCurrentPage('home');
+    setShowApp(true);
   };
 
   const handleSignupNavigateLogin = () => {
     console.log("User going back to login from signup");
-    setCurrentPage('login');
   };
 
   const handleLogout = () => {
     console.log("User logged out, navigating to login");
-    setCurrentPage('login');
+    setShowApp(false);
   };
 
-  if (currentPage === 'home') {
-    return <Home onLogout={handleLogout} />;
+  // If splash screen should show, display it
+  if (!showApp) {
+    return (
+      <View style={styles.container}>
+        <Animated.Image source={Brand} style={[styles.logo, { transform: [{ translateY }] }]} />
+        <Text style={styles.title}>Foodie</Text>
+      </View>
+    );
   }
 
-  if (currentPage === 'signup') {
-    return <SignupScreen onNavigateHome={handleSignupNavigateHome} onNavigateLogin={handleSignupNavigateLogin} />;
-  }
-
-  if (currentPage === 'login') {
-    return <LoginScreen onNavigateHome={handleLoginNavigateHome} onNavigateSignup={handleLoginNavigateSignup} />;
-  }
-
-  return (
-    <View style={styles.container}>
-      <Animated.Image source={Brand} style={[styles.logo, { transform: [{ translateY }] }]} />
-      <Text style={styles.title}>Foodie</Text>
-    </View>
-  );
+  // Otherwise show the full app with all navigation
+  return <App />;
 }
 
 const styles = StyleSheet.create({

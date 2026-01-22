@@ -8,7 +8,6 @@ import {
   TextInput,
   FlatList,
   Dimensions,
-  Image,
   Modal,
 } from "react-native";
 
@@ -100,13 +99,16 @@ const PROMOTIONS = [
   { id: 3, title: "💰 Cashback 50%", subtitle: "Up to ₹200", color: "#FFD93D" },
 ];
 
-export default function Home({ onLogout }) {
+export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOrders, cartItems, onAddToCart }) {
   const [selectedCategory, setSelectedCategory] = useState(1);
   const [searchText, setSearchText] = useState("");
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
-  const [cartItems, setCartItems] = useState({});
+  // const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [cartItemsLocal, setCartItemsLocal] = useState(cartItems || {});
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+
+  // Calculate total items in cart
+  const cartCount = Object.values(cartItemsLocal).reduce((sum, qty) => sum + qty, 0);
 
   const handleLogout = () => {
     console.log("Logout button pressed");
@@ -127,26 +129,23 @@ export default function Home({ onLogout }) {
   );
 
   const addToCart = (restaurantId) => {
-    setCartItems((prev) => ({
-      ...prev,
-      [restaurantId]: (prev[restaurantId] || 0) + 1,
-    }));
+    const newCart = { ...cartItemsLocal, [restaurantId]: (cartItemsLocal[restaurantId] || 0) + 1 };
+    setCartItemsLocal(newCart);
+    if (onAddToCart) onAddToCart(restaurantId, 1);
   };
 
   const removeFromCart = (restaurantId) => {
-    setCartItems((prev) => {
-      const newCart = { ...prev };
-      if (newCart[restaurantId] > 1) {
-        newCart[restaurantId] -= 1;
-      } else {
-        delete newCart[restaurantId];
-      }
-      return newCart;
-    });
+    const newCart = { ...cartItemsLocal };
+    if (newCart[restaurantId] > 1) {
+      newCart[restaurantId] -= 1;
+    } else {
+      delete newCart[restaurantId];
+    }
+    setCartItemsLocal(newCart);
   };
 
   const renderRestaurantCard = ({ item }) => (
-    <TouchableOpacity activeOpacity={0.8} style={styles.restaurantCard}>
+    <TouchableOpacity activeOpacity={0.8} style={styles.restaurantCard} onPress={() => onViewFoodDetails?.(item.id)}>
       {/* Image Section */}
       <View style={styles.cardImageContainer}>
         <View style={styles.placeholderImage}>
@@ -173,7 +172,7 @@ export default function Home({ onLogout }) {
 
         {/* Add to Cart Button */}
         <View style={styles.cartControls}>
-          {cartItems[item.id] ? (
+          {cartItemsLocal[item.id] ? (
             <View style={styles.counterContainer}>
               <TouchableOpacity
                 style={styles.counterBtn}
@@ -181,7 +180,7 @@ export default function Home({ onLogout }) {
               >
                 <Text style={styles.counterText}>−</Text>
               </TouchableOpacity>
-              <Text style={styles.counterValue}>{cartItems[item.id]}</Text>
+              <Text style={styles.counterValue}>{cartItemsLocal[item.id]}</Text>
               <TouchableOpacity
                 style={styles.counterBtn}
                 onPress={() => addToCart(item.id)}
@@ -211,7 +210,10 @@ export default function Home({ onLogout }) {
             <View style={styles.headerLeftSection}>
               <TouchableOpacity
                 style={styles.menuToggle}
-                onPress={() => setSidebarVisible(true)}
+                onPress={() => {
+                  console.log("Menu toggle pressed");
+                  setSidebarVisible(true);
+                }}
                 activeOpacity={0.7}
               >
                 <Text style={styles.menuIcon}>☰</Text>
@@ -221,13 +223,40 @@ export default function Home({ onLogout }) {
                 <Text style={styles.location}>📍 New Delhi</Text>
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.logoutButton}
-              onPress={() => setProfileModalVisible(true)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.logoutIcon}>👤</Text>
-            </TouchableOpacity>
+            <View style={styles.headerRightSection}>
+              <TouchableOpacity
+                style={styles.cartButton}
+                onPress={() => {
+                  console.log("Cart icon pressed, onViewCart:", typeof onViewCart);
+                  if (onViewCart) onViewCart();
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.cartIcon}>🛒</Text>
+                {cartCount > 0 && (
+                  <View style={styles.cartBadge}>
+                    <Text style={styles.cartBadgeText}>{cartCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.ordersButton}
+                onPress={() => {
+                  console.log("Orders icon pressed, onViewOrders:", typeof onViewOrders);
+                  if (onViewOrders) onViewOrders();
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.ordersIcon}>📋</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={() => setProfileModalVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.logoutIcon}>👤</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Search Bar */}
@@ -460,11 +489,66 @@ export default function Home({ onLogout }) {
 
               <TouchableOpacity
                 style={styles.sidebarMenuItem}
-                onPress={() => setSidebarVisible(false)}
+                onPress={() => {
+                  console.log("Sidebar: Cart clicked");
+                  setSidebarVisible(false);
+                  if (onViewCart) {
+                    console.log("Navigating to cart");
+                    onViewCart();
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sidebarItemIcon}>🛒</Text>
+                <Text style={styles.sidebarItemText}>Cart</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.sidebarMenuItem}
+                onPress={() => {
+                  console.log("Sidebar: Food Menu clicked");
+                  setSidebarVisible(false);
+                  if (onViewFoodDetails) {
+                    console.log("Navigating to food details");
+                    onViewFoodDetails(1);
+                  }
+                }}
                 activeOpacity={0.7}
               >
                 <Text style={styles.sidebarItemIcon}>🍽️</Text>
-                <Text style={styles.sidebarItemText}>Categories</Text>
+                <Text style={styles.sidebarItemText}>Food Menu</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.sidebarMenuItem}
+                onPress={() => {
+                  console.log("Sidebar: Orders clicked");
+                  setSidebarVisible(false);
+                  if (onViewOrders) {
+                    console.log("Navigating to orders");
+                    onViewOrders();
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sidebarItemIcon}>📋</Text>
+                <Text style={styles.sidebarItemText}>Orders</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.sidebarMenuItem}
+                onPress={() => {
+                  console.log("Sidebar: Payment clicked");
+                  setSidebarVisible(false);
+                  if (onViewCart) {
+                    console.log("Navigating to payment (via cart)");
+                    onViewCart();
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sidebarItemIcon}>💳</Text>
+                <Text style={styles.sidebarItemText}>Payment</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -553,6 +637,54 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
 
+  /* ===== HEADER RIGHT SECTION ===== */
+  headerRightSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  cartButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFF3E0",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
+  cartIcon: {
+    fontSize: 22,
+  },
+  cartBadge: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    backgroundColor: "#FF6B6B",
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  cartBadgeText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  ordersButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F0F8FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  ordersIcon: {
+    fontSize: 22,
+  },
+
   /* ===== SEARCH BAR ===== */
   searchContainer: {
     flexDirection: "row",
@@ -584,6 +716,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     justifyContent: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
   },
   promoTitle: {
     fontSize: 18,
@@ -666,11 +803,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#F0F0F0",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+    shadowColor: "#FF9800",
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    transform: [{ scale: 1 }],
   },
   cardImageContainer: {
     position: "relative",
