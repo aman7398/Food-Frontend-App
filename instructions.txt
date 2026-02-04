@@ -1,0 +1,10 @@
+pending:
+    put go back buttons
+    show message on success requests
+    User profile page
+    login/logout navigation
+
+
+onDeploy:
+    replace the fallback pincode
+    replace the BASE URL

@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, Animated } from 'react-native';
 import * as SplashScreenModule from 'expo-splash-screen';
-import Home from './home.jsx';
-import Login from './login';
-import Cart from './cart.jsx';
+import Home from './screens/home.jsx';
+import Login from './screens/login.jsx';
+import Cart from './screens/cart.jsx';
 import FoodDetails from './fooddetails.jsx';
-import Payment from './payment.jsx';
-import Orders from './orders.jsx';
+import Payment from './screens/payment.jsx';
+import Orders from './screens/orders.jsx';
 import Brand from '../assets/brand.png';
 
 SplashScreenModule.preventAutoHideAsync();

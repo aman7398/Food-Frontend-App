@@ -6,12 +6,17 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { signUpUser } from "app/api/api/auth.api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+// import { useRouter } from "expo-router";
 
 const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
-  const router = useRouter();
+  // const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
+  const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState({});
   const [password, setPassword] = useState("");
@@ -30,6 +35,15 @@ const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
       valid = false;
     } else if (!/^[A-Za-z ]+$/.test(name)) {
       newErrors.name = "Name can contain only letters";
+      valid = false;
+    }
+
+    // phone validtion
+    if (!mobile.trim()) {
+      newErrors.mobile = "Mobile number is required";
+      valid = false;
+    } else if (!/^[6-9]\d{9}$/.test(mobile)) {
+      newErrors.mobile = "Enter valid 10 digit mobile number";
       valid = false;
     }
 
@@ -55,24 +69,44 @@ const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
     return valid;
   };
 
-  const handleSignUp = () => {
-    if (validateForm()) {
-      console.log("Sign up successful");
-      if (onNavigateHome) {
-        onNavigateHome();
-      } else {
-        router.replace("/login");
-      }
+  const handleSignUp = async () => {
+    if (!validateForm()) return;
+
+    try {
+      setLoading(true);
+
+      const res = await signUpUser({
+        name,
+        email,
+        mobile,
+        password,
+      });
+
+      Alert.alert("OTP Sent", "Please verify OTP sent to your email");
+
+      navigation.navigate("OtpVerify", {
+        mobile,
+        email,
+      });
+    } catch (error) {
+      Alert.alert(
+        "Signup Failed",
+        error?.response?.data?.message || "Something went wrong"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
+
+
+
   const handleBackToLogin = () => {
     console.log("Navigate back to login");
-    if (onNavigateLogin) {
-      onNavigateLogin();
-    } else {
-      router.push("/login");
-    }
+    navigation.navigate("Login")
+    // else {
+    //   router.push("/login");
+    // }
   };
 
   return (
@@ -91,6 +125,22 @@ const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
       />
 
       {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+
+      <TextInput
+        placeholder="Mobile Number"
+        style={[styles.input, errors.mobile && { borderColor: "red" }]}
+        value={mobile}
+        onChangeText={(text) => {
+          setMobile(text.replace(/[^0-9]/g, ""));
+          setErrors({ ...errors, mobile: null });
+        }}
+        keyboardType="number-pad"
+        maxLength={10}
+      />
+
+      {errors.mobile && (
+        <Text style={styles.errorText}>{errors.mobile}</Text>
+      )}
 
       <TextInput
         placeholder="hello@gmail.com"
@@ -125,7 +175,7 @@ const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
           <Ionicons
             name={showPassword ? "eye-off" : "eye"}
-            size={22} handleBackToLogin
+            size={22}
             color="#777"
           />
         </TouchableOpacity>
@@ -135,8 +185,14 @@ const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
         <Text style={styles.errorText}>{errors.password}</Text>
       )}
 
-      <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-        <Text style={styles.buttonText}>Sign Up</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && { opacity: 0.6 }]}
+        onPress={handleSignUp}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? "Creating Account..." : "Sign Up"}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleBackToLogin}>

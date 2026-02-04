@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -7,6 +7,11 @@ import {
     ScrollView,
     FlatList,
 } from "react-native";
+import axios from "axios";
+import { useNavigation } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const BASE_URL = 'http://localhost:5000/api/v1'
 
 const SAMPLE_ORDERS = [
     {
@@ -69,13 +74,55 @@ const SAMPLE_ORDERS = [
 export default function Orders({ onClose, onReorder }) {
     const [filterStatus, setFilterStatus] = useState("All");
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const navigation = useNavigation()
 
     const statuses = ["All", "Delivered", "Cancelled", "In Progress"];
 
+    const fetchMyOrders = async () => {
+        try {
+            const res = await axios.get(`${BASE_URL}/order/my-orders`, {
+                headers: {
+                    Authorization: `Bearer ${await AsyncStorage.getItem("token")}`, // make sure token exists
+                },
+            }
+            );
+
+            const mappedOrders = res.data.data.map((order) => ({
+                id: order._id,
+                date: order.createdAt,
+                restaurant: "Your Restaurant", // backend doesn’t send name yet
+                items: order.orderItems.map((i) => i.name),
+                total: order.grandTotal,
+                status:
+                    order.orderStatus === "PLACED"
+                        ? "In Progress"
+                        : order.orderStatus === "DELIVERED"
+                            ? "Delivered"
+                            : "Cancelled",
+                delivery_time: "30-40 mins",
+                emoji: "🍱",
+                raw: order, // keep full order if needed
+            }));
+
+            setOrders(mappedOrders);
+        } catch (error) {
+            console.log("Order fetch error", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    useEffect(() => {
+        fetchMyOrders();
+    }, []);
+
     const filteredOrders =
         filterStatus === "All"
-            ? SAMPLE_ORDERS
-            : SAMPLE_ORDERS.filter((order) => order.status === filterStatus);
+            ? orders
+            : orders.filter((order) => order.status === filterStatus);
 
     const renderOrderCard = ({ item }) => (
         <TouchableOpacity
@@ -142,7 +189,7 @@ export default function Orders({ onClose, onReorder }) {
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
-                    <Text style={styles.backButton}>← Back</Text>
+                    <Text style={styles.backButton} onPress={() => navigation.pop()}>← Back</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>📋 Orders</Text>
                 <View style={{ width: 50 }} />
@@ -177,7 +224,12 @@ export default function Orders({ onClose, onReorder }) {
             </ScrollView>
 
             {/* Orders List */}
-            {filteredOrders.length > 0 ? (
+            {loading ? (
+                <View style={styles.emptyState}>
+                    <Text style={styles.emptyEmoji}>⏳</Text>
+                    <Text style={styles.emptyText}>Loading orders...</Text>
+                </View>
+            ) : filteredOrders.length > 0 ? (
                 <FlatList
                     data={filteredOrders}
                     renderItem={renderOrderCard}
@@ -188,10 +240,15 @@ export default function Orders({ onClose, onReorder }) {
             ) : (
                 <View style={styles.emptyState}>
                     <Text style={styles.emptyEmoji}>📭</Text>
-                    <Text style={styles.emptyText}>No {filterStatus.toLowerCase()} orders</Text>
-                    <Text style={styles.emptySubtext}>Start ordering delicious food now!</Text>
+                    <Text style={styles.emptyText}>
+                        No {filterStatus.toLowerCase()} orders
+                    </Text>
+                    <Text style={styles.emptySubtext}>
+                        Start ordering delicious food now!
+                    </Text>
                 </View>
             )}
+
 
             {/* Order Details Modal */}
             {selectedOrder && (
@@ -353,13 +410,15 @@ const styles = StyleSheet.create({
     },
     filterScroll: {
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 2,
         borderBottomWidth: 1,
         borderBottomColor: "#F0F0F0",
     },
     filterButton: {
+        maxHeight:"32px",
+        marginTop:"4px",
         paddingHorizontal: 14,
-        paddingVertical: 8,
+        paddingVertical: 6,
         borderRadius: 10,
         backgroundColor: "#F5F5F5",
         marginRight: 10,

@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,9 +11,13 @@ import {
   FlatList,
   Dimensions,
   Modal,
+  Image,
 } from "react-native";
+import fallbackFoodImage from '../../assets/fallbackFoodImage.jpg'
 
 const { width } = Dimensions.get("window");
+
+const BASE_URL = 'http://localhost:5000/api/v1'
 
 const CATEGORIES = [
   { id: 1, name: "All", emoji: "🍽️" },
@@ -100,18 +106,99 @@ const PROMOTIONS = [
 ];
 
 export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOrders, cartItems, onAddToCart }) {
+  const [userData, setUserData] = useState()
+  const pincode = userData?.address?.pincode || 224001;
+  const navigation = useNavigation();
   const [selectedCategory, setSelectedCategory] = useState(1);
   const [searchText, setSearchText] = useState("");
   // const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [cartItemsLocal, setCartItemsLocal] = useState(cartItems || {});
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [page, setPage] = useState(1)
+  const [pageData, setPageData] = useState([])
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const didInitialFetch = useRef(false);
+
+  useEffect(() => {
+    const getProfile = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/user/profile`)
+        if (!res.ok) throw new Error()
+        const resData = await res.json()
+        await AsyncStorage.setItem("userData", JSON.stringify(resData.data))
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    const getUserData = async () => {
+      const data = await AsyncStorage.getItem("userData")
+      setUserData(JSON.parse(data))
+    }
+    getUserData()
+    getProfile()
+  }, [])
+
+  const fetchFoodsByPincode = async (reset = false) => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+
+    const response = await fetch(
+      `${BASE_URL}/foods/discover?pincode=${pincode}&page=${page}&limit=10`,
+      {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    const resData = await response.json();
+
+    if (resData.data.length === 0) {
+      setHasMore(false);
+    } else {
+      setPageData(prev =>
+        reset ? resData.data : [...prev, ...resData.data]
+      );
+    }
+
+    setLoadingMore(false);
+  };
+
+  useEffect(() => {
+    if (!pincode) return;
+    if (didInitialFetch.current) return;
+
+    didInitialFetch.current = true;
+    setPage(1);
+    setHasMore(true);
+    fetchFoodsByPincode(true);
+  }, [pincode]);
+
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      setPage(prev => prev + 1);
+    }
+  };
+
+  useEffect(() => {
+    if (page > 1) {
+      fetchFoodsByPincode();
+    }
+  }, [page]);
 
   // Calculate total items in cart
   const cartCount = Object.values(cartItemsLocal).reduce((sum, qty) => sum + qty, 0);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log("Logout button pressed");
+    await AsyncStorage.clear()
+    await AsyncStorage.removeItem("token");
+    await AsyncStorage.removeItem("userData");
+    navigation.replace("Login")
     setProfileModalVisible(false);
     if (onLogout) onLogout();
   };
@@ -128,10 +215,61 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
     r.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const addToCart = (restaurantId) => {
-    const newCart = { ...cartItemsLocal, [restaurantId]: (cartItemsLocal[restaurantId] || 0) + 1 };
-    setCartItemsLocal(newCart);
-    if (onAddToCart) onAddToCart(restaurantId, 1);
+  const searchRestaurantsAndFoods = async (query, reset = false) => {
+    const res = await fetch(
+      `${BASE_URL}/restaurant/search?q=${query}&page=${page}&limit=10`,
+      {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    const json = await res.json();
+
+    const foods = json.data.flatMap(r =>
+      r.foods.map(f => ({ ...f, restaurant: r }))
+    );
+
+    if (foods.length === 0) setHasMore(false);
+
+    // setPageData(prev => (reset ? foods : [...prev, ...foods]));
+    setPageData(prev => {
+      const map = new Map(prev.map(i => [i._id, i]));
+      foods.forEach(f => map.set(f._id, f));
+      return Array.from(map.values());
+    });
+  };
+
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+
+    if (searchText.trim().length > 0) {
+      searchRestaurantsAndFoods(searchText, true);
+    } else {
+      fetchFoodsByPincode(true);
+    }
+  }, [searchText]);
+
+  const addToCart = async (id) => {
+    try {
+      const res = await fetch(`${BASE_URL}/user/add-to-cart`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`
+        },
+        body: JSON.stringify({ foodId: id })
+      })
+      const resData = await res.json()
+
+      if (!res.ok) {
+        throw new Error(resData.message)
+      }
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const removeFromCart = (restaurantId) => {
@@ -144,46 +282,65 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
     setCartItemsLocal(newCart);
   };
 
+  const FoodImage = ({ image }) => {
+    const [error, setError] = useState(false);
+
+    return (
+      <Image
+        source={
+          !error && image
+            ? { uri: image }
+            : require("../../assets/fallbackFoodImage.jpg")
+        }
+        style={styles.placeholderImage}
+        resizeMode="cover"
+        onError={() => setError(true)}
+      />
+    );
+  };
+
   const renderRestaurantCard = ({ item }) => (
-    <TouchableOpacity activeOpacity={0.8} style={styles.restaurantCard} onPress={() => onViewFoodDetails?.(item.id)}>
+    <TouchableOpacity activeOpacity={0.8} style={styles.restaurantCard} onPress={() => onViewFoodDetails?.(item._id)}>
       {/* Image Section */}
       <View style={styles.cardImageContainer}>
         <View style={styles.placeholderImage}>
-          <Text style={styles.placeholderEmoji}>{item.emoji}</Text>
+          {/* <Text style={styles.placeholderEmoji}>{item.image[0] }</Text> */}
+          <FoodImage image={item.image?.[0]} />
+
         </View>
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountText}>{item.discount}</Text>
-        </View>
+        {item?.discount && <View style={styles.discountBadge}>
+          <Text style={styles.discountText}>{item.discount || ""}</Text>
+        </View>}
       </View>
 
       {/* Content Section */}
       <View style={styles.cardContent}>
         <Text style={styles.restaurantName}>{item.name}</Text>
-        <Text style={styles.cuisineType}>{item.cuisine}</Text>
+        <Text style={styles.cuisineType}>From: {item.restaurant.name}</Text>
 
         {/* Rating and Delivery Info */}
         <View style={styles.infoRow}>
           <View style={styles.ratingContainer}>
-            <Text style={styles.ratingText}>⭐ {item.rating}</Text>
+            <Text style={styles.ratingText}>⭐ {item.rating || 4.3}</Text>
           </View>
-          <Text style={styles.deliveryTime}>{item.deliveryTime}</Text>
-          <Text style={styles.deliveryFee}>{item.deliveryFee}</Text>
+          <Text style={styles.deliveryTime}>{item?.restaurant?.deliveryTime} min</Text>
+          <Text style={styles.deliveryFee}>₹{item?.restaurant?.deliveryCharge}</Text>
         </View>
 
         {/* Add to Cart Button */}
         <View style={styles.cartControls}>
-          {cartItemsLocal[item.id] ? (
+          {cartItemsLocal[item._id] ? (
             <View style={styles.counterContainer}>
               <TouchableOpacity
                 style={styles.counterBtn}
-                onPress={() => removeFromCart(item.id)}
+                onPress={() => removeFromCart(item._id)}
               >
                 <Text style={styles.counterText}>−</Text>
               </TouchableOpacity>
-              <Text style={styles.counterValue}>{cartItemsLocal[item.id]}</Text>
+              <Text style={styles.counterValue}>{cartItemsLocal[item._id]}</Text>
               <TouchableOpacity
                 style={styles.counterBtn}
-                onPress={() => addToCart(item.id)}
+                onPress={() => addToCart(item._id)}
               >
                 <Text style={styles.counterText}>+</Text>
               </TouchableOpacity>
@@ -191,7 +348,7 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
           ) : (
             <TouchableOpacity
               style={styles.addButton}
-              onPress={() => addToCart(item.id)}
+              onPress={() => addToCart(item._id)}
             >
               <Text style={styles.addButtonText}>Add to Cart</Text>
             </TouchableOpacity>
@@ -201,6 +358,7 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
     </TouchableOpacity>
   );
 
+  console.log("userData", userData)
   return (
     <>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -208,7 +366,7 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View style={styles.headerLeftSection}>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={styles.menuToggle}
                 onPress={() => {
                   console.log("Menu toggle pressed");
@@ -217,10 +375,10 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
                 activeOpacity={0.7}
               >
                 <Text style={styles.menuIcon}>☰</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               <View>
-                <Text style={styles.greeting}>Home</Text>
-                <Text style={styles.location}>📍 New Delhi</Text>
+                <Text style={styles.greeting}>{userData?.address?.label || "Home"}</Text>
+                <Text style={styles.location}>📍 {userData?.address?.pincode || "Enter Pincode"}</Text>
               </View>
             </View>
             <View style={styles.headerRightSection}>
@@ -228,6 +386,7 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
                 style={styles.cartButton}
                 onPress={() => {
                   console.log("Cart icon pressed, onViewCart:", typeof onViewCart);
+                  navigation.push("Cart");
                   if (onViewCart) onViewCart();
                 }}
                 activeOpacity={0.7}
@@ -244,6 +403,7 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
                 onPress={() => {
                   console.log("Orders icon pressed, onViewOrders:", typeof onViewOrders);
                   if (onViewOrders) onViewOrders();
+                  navigation.push("MyOrders")
                 }}
                 activeOpacity={0.7}
               >
@@ -273,7 +433,7 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
         </View>
 
         {/* Promotions Carousel */}
-        <ScrollView
+        {/* <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.promotionsScroll}
@@ -288,10 +448,10 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
               <Text style={styles.promoSubtitle}>{promo.subtitle}</Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </ScrollView> */}
 
         {/* Categories */}
-        <View style={styles.categoriesSection}>
+        {/* <View style={styles.categoriesSection}>
           <Text style={styles.sectionLabel}>Browse Categories</Text>
           <ScrollView
             horizontal
@@ -320,44 +480,62 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
               </TouchableOpacity>
             ))}
           </ScrollView>
-        </View>
+        </View> */}
 
         {/* Restaurants List */}
-        <View style={styles.restaurantsSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionLabel}>
-              {selectedCategory === 1 ? "Top Restaurants" : `${CATEGORIES.find(c => c.id === selectedCategory)?.name} Restaurants`}
-            </Text>
-            <TouchableOpacity activeOpacity={0.7}>
-              <Text style={styles.viewAll}>Sort & Filter →</Text>
-            </TouchableOpacity>
-          </View>
+        <FlatList
+          data={pageData}
+          renderItem={renderRestaurantCard}
+          keyExtractor={(item) => item._id.toString()}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.restaurantsList}
 
-          {searchedRestaurants.length > 0 ? (
-            <FlatList
-              scrollEnabled={false}
-              data={searchedRestaurants}
-              renderItem={renderRestaurantCard}
-              keyExtractor={(item) => item.id.toString()}
-              contentContainerStyle={styles.restaurantsList}
-            />
-          ) : (
+          ListHeaderComponent={
+            <>
+              {/* Header */}
+              <View style={styles.header}>
+                {/* KEEP YOUR EXISTING HEADER JSX HERE */}
+              </View>
+
+              {/* Section Title */}
+              <View style={styles.restaurantsSection}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionLabel}>Top Foods</Text>
+                </View>
+              </View>
+            </>
+          }
+
+          ListFooterComponent={
+            loadingMore ? (
+              <Text style={{ textAlign: "center", padding: 16 }}>
+                Loading more...
+              </Text>
+            ) : null
+          }
+
+          ListEmptyComponent={
             <View style={styles.noResults}>
-              <Text style={styles.noResultsText}>No restaurants found</Text>
+              <Text style={styles.noResultsText}>No Food Items found</Text>
             </View>
-          )}
-        </View>
+          }
+        />
+
 
         {/* Footer */}
-        <View style={styles.footer}>
+        {/* <View style={styles.footer}>
           <TouchableOpacity
             style={styles.logoutFooterButton}
             onPress={handleLogout}
             activeOpacity={0.7}
           >
-            <Text style={styles.logoutFooterText}>🚪 Logout</Text>
+            <Text style={styles.logoutFooterText} onPress={async () => {
+              await AsyncStorage.clear()
+            }}>🚪 Logout</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
       </ScrollView>
 
       {/* Profile Modal */}
@@ -394,23 +572,28 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
 
             {/* Profile Options */}
             <View style={styles.profileOptionsContainer}>
-              <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}>
+              {/* <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}>
                 <Text style={styles.optionIcon}>❤️</Text>
                 <View style={styles.optionContent}>
                   <Text style={styles.optionTitle}>Favorites</Text>
                   <Text style={styles.optionSubtitle}>Your favorite restaurants</Text>
                 </View>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
-              <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}>
+              {/* <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}>
                 <Text style={styles.optionIcon}>📋</Text>
                 <View style={styles.optionContent}>
                   <Text style={styles.optionTitle}>Orders</Text>
                   <Text style={styles.optionSubtitle}>View order history</Text>
                 </View>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
-              <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}
+                onPress={() => {
+                  console.log("Address pressed");
+                  setProfileModalVisible(false);
+                  setTimeout(() => navigation.push("AddressList"), 100);
+                }}>
                 <Text style={styles.optionIcon}>📍</Text>
                 <View style={styles.optionContent}>
                   <Text style={styles.optionTitle}>Addresses</Text>
@@ -418,21 +601,44 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}>
+              {userData?.role === "restaurant_admin" && <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}
+                onPress={() => {
+                  setProfileModalVisible(false);
+                  setTimeout(() => navigation.push("Restaurant"), 100);
+                }}>
+                <Text style={styles.optionIcon}>⚙️</Text>
+                <View style={styles.optionContent}>
+                  <Text style={styles.optionTitle}>My Restaurant</Text>
+                  <Text style={styles.optionSubtitle}>Manage Your Foods </Text>
+                </View>
+              </TouchableOpacity>}
+              {userData?.role === "admin" && <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}
+                onPress={() => {
+                  setProfileModalVisible(false);
+                  setTimeout(() => navigation.push("ApproveRestaurants"), 100);
+                }}>
+                <Text style={styles.optionIcon}>🛡️</Text>
+                <View style={styles.optionContent}>
+                  <Text style={styles.optionTitle}>Restaurants List</Text>
+                  <Text style={styles.optionSubtitle}>Approve restaurants</Text>
+                </View>
+              </TouchableOpacity>}
+
+              {/* <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}>
                 <Text style={styles.optionIcon}>💳</Text>
                 <View style={styles.optionContent}>
                   <Text style={styles.optionTitle}>Payment Methods</Text>
                   <Text style={styles.optionSubtitle}>Manage payment options</Text>
                 </View>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
-              <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}>
+              {/* <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}>
                 <Text style={styles.optionIcon}>⚙️</Text>
                 <View style={styles.optionContent}>
                   <Text style={styles.optionTitle}>Settings</Text>
                   <Text style={styles.optionSubtitle}>Preferences and notifications</Text>
                 </View>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
               <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}>
                 <Text style={styles.optionIcon}>🆘</Text>
@@ -854,6 +1060,7 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 8,
     fontWeight: "500",
+    opacity: 0.75,
   },
   infoRow: {
     flexDirection: "row",
@@ -936,6 +1143,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#999",
     fontWeight: "500",
+  },
+  noResultsText2: {
+    fontSize: 12,
+    color: "#999",
+    fontWeight: "500",
+    opacity: 0.75
   },
 
   /* ===== FOOTER ===== */

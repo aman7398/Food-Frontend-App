@@ -1,3 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { loginUser } from "app/api/api/auth.api";
 import React, { useState } from "react";
 import {
   View,
@@ -5,29 +8,67 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 
-export default function LoginScreen({ onNavigateHome, onNavigateSignup }) {
+export default function LoginScreen() {
+  const navigation = useNavigation()
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    if (email && password) {
-      console.log("Login pressed with email:", email);
-      if (onNavigateHome) {
-        onNavigateHome();
+  // const handleLogin = () => {
+  //   if (email && password) {
+  //     console.log("Login pressed with email:", email);
+  //     if (onNavigateHome) {
+  //       onNavigateHome();
+  //     }
+  //   } else {
+  //     alert("Please enter email and password");
+  //   }
+  // };
+  const handleLogin = async () => {
+    if (!email || !password) {
+      return Alert.alert("Error", "All fields required");
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await loginUser({ email, password });
+      console.log("LOGIN RESPONSE:", res);
+
+      // 🔑 SAVE TOKEN (handle different response shapes)
+      const token = res?.token ?? res?.data?.token ?? res?.accessToken ?? res?.user?.token;
+
+      if (!token) {
+        Alert.alert("Login Failed", "No token returned from server");
+        return;
       }
-    } else {
-      alert("Please enter email and password");
+
+      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("userData", JSON.stringify(res?.user ?? res));
+      Alert.alert("Success", "Login successful");
+
+      // navigate to Home
+      navigation.replace("Home");
+
+    } catch (error) {
+      Alert.alert(
+        "Login Failed",
+        error?.response?.data?.message || "Something went wrong"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
+
+
   const handleSignupClick = () => {
     console.log("Navigate to signup");
-    if (onNavigateSignup) {
-      onNavigateSignup();
-    }
+    navigation.navigate("Signup");
   };
 
   return (
@@ -56,11 +97,13 @@ export default function LoginScreen({ onNavigateHome, onNavigateSignup }) {
       </View>
 
       <TouchableOpacity
-        style={styles.loginButton}
+        style={[styles.loginButton, loading && { opacity: 0.6 }]}
         onPress={handleLogin}
-        activeOpacity={0.7}
+        disabled={loading}
       >
-        <Text style={styles.loginText}>Login</Text>
+        <Text style={styles.loginText}>
+          {loading ? "Logging in..." : "Login"}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleSignupClick}>
@@ -102,8 +145,13 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   passwordInput: {
-    flex: 1,
+    // flex: 1,
     padding: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    marginBottom: 15,
+    borderRadius: 8,
+    width: "100%",
   },
   togglePassword: {
     paddingRight: 10,
