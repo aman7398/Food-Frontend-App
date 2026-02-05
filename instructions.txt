@@ -4,6 +4,7 @@ pending:
     User profile page
     login/logout navigation
 
+ensure the baseUrl in app/api/api/api.js
 
 onDeploy:
     replace the fallback pincode
