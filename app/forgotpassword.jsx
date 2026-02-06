@@ -61,7 +61,7 @@ export default function ForgotPassword() {
       <Text style={styles.title}>Forgot Password 🔐</Text>
 
       {/* STEP 1: EMAIL */}
-      {step === 1 && (
+      {step === 1 ? (
         <>
           <TextInput
             placeholder="Enter your email"
@@ -73,10 +73,10 @@ export default function ForgotPassword() {
             <Text style={styles.buttonText}>Send OTP</Text>
           </TouchableOpacity>
         </>
-      )}
+      ): <></> }
 
       {/* STEP 2: OTP */}
-      {step === 2 && (
+      {step === 2 ? (
         <>
           <TextInput
             placeholder="Enter OTP"
@@ -89,10 +89,10 @@ export default function ForgotPassword() {
             <Text style={styles.buttonText}>Verify OTP</Text>
           </TouchableOpacity>
         </>
-      )}
+      ) : <></> }
 
       {/* STEP 3: NEW PASSWORD */}
-      {step === 3 && (
+      {step === 3 ? (
         <>
           <TextInput
             placeholder="New Password"
@@ -114,7 +114,7 @@ export default function ForgotPassword() {
             <Text style={styles.buttonText}>Reset Password</Text>
           </TouchableOpacity>
         </>
-      )}
+      ) : <></> }
 
       <TouchableOpacity onPress={() => router.back()}>
         <Text style={styles.link}>Back to Login</Text>

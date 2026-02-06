@@ -94,7 +94,11 @@ export default function FoodDetails({ selectedFoodId, onClose, onAddToCart }) {
                             <View style={styles.quantityControls}>
                                 <TouchableOpacity
                                     style={styles.quantityBtn}
-                                    onPress={() => quantity > 1 && setQuantity(quantity - 1)}
+                                    onPress={() => {
+                                        if (quantity > 1) {
+                                            setQuantity(quantity - 1);
+                                        }
+                                    }}
                                     activeOpacity={0.7}
                                 >
                                     <Text style={styles.quantityBtnText}>−</Text>
@@ -140,7 +144,7 @@ export default function FoodDetails({ selectedFoodId, onClose, onAddToCart }) {
                                 key={category}
                                 style={[
                                     styles.categoryFilterButton,
-                                    selectedCategory === category && styles.categoryFilterButtonActive,
+                                    selectedCategory === category ? styles.categoryFilterButtonActive : null,
                                 ]}
                                 onPress={() => setSelectedCategory(category)}
                                 activeOpacity={0.7}
@@ -148,7 +152,7 @@ export default function FoodDetails({ selectedFoodId, onClose, onAddToCart }) {
                                 <Text
                                     style={[
                                         styles.categoryFilterText,
-                                        selectedCategory === category && styles.categoryFilterTextActive,
+                                        selectedCategory === category ? styles.categoryFilterTextActive : null,
                                     ]}
                                 >
                                     {category}

@@ -8,8 +8,7 @@ import {
     ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const BASE_URL = "http://localhost:5000/api/v1";
+import { BASE_URL } from "app/api/lib";
 
 export default function AddressList({ navigation }) {
     const [addresses, setAddresses] = useState([]);
@@ -61,7 +60,7 @@ export default function AddressList({ navigation }) {
                 <View key={item._id} style={styles.card}>
                     <View style={styles.row}>
                         <Text style={styles.name}>{item.name}</Text>
-                        {item.isDefault && <Text style={styles.default}>DEFAULT</Text>}
+                        {item.isDefault ? <Text style={styles.default}>DEFAULT</Text> : <></> }
                     </View>
 
                     <Text style={styles.text}>{item.addressLine}</Text>

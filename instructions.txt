@@ -8,4 +8,4 @@ ensure the baseUrl in app/api/api/api.js
 
 onDeploy:
     replace the fallback pincode
-    replace the BASE URL
+    replace the BASE URL in app/api/lib.jsx

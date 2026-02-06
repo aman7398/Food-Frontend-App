@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BASE_URL } from "app/api/lib";
 import React, { useEffect, useState } from "react";
 import {
     View,
@@ -10,7 +11,6 @@ import {
     Switch,
 } from "react-native";
 
-const BASE_URL = "http://localhost:5000/api/v1";
 
 export default function AddFoodScreen({ route }) {
     const { restaurantId, data } = route.params;

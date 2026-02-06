@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BASE_URL } from "app/api/lib";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -9,8 +10,6 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
-
-const BASE_URL = "http://localhost:5000/api/v1";
 
 export default function Cart({ navigation }) {
   const [cart, setCart] = useState(null);
@@ -142,10 +141,10 @@ if (!cart || cart.items.length === 0) {
 
 const Row = ({ label, value, bold }) => (
   <View style={styles.row}>
-    <Text style={[styles.label, bold && styles.bold]}>
+    <Text style={[styles.label, bold ? styles.bold : null ]}>
       {label}
     </Text>
-    <Text style={[styles.value, bold && styles.bold]}>
+    <Text style={[styles.value, bold ? styles.bold : null ]}>
       {value}
     </Text>
   </View>

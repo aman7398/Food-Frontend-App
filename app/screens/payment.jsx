@@ -9,8 +9,7 @@ import {
     Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const BASE_URL = "http://localhost:5000/api/v1";
+import { BASE_URL } from "app/api/lib";
 
 export default function Payment({ route, navigation }) {
     const { orderTotal } = route.params

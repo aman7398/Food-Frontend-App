@@ -14,10 +14,9 @@ import {
   Image,
 } from "react-native";
 import fallbackFoodImage from '../../assets/fallbackFoodImage.jpg'
+import { BASE_URL } from "app/api/lib";
 
 const { width } = Dimensions.get("window");
-
-const BASE_URL = 'http://localhost:5000/api/v1'
 
 const CATEGORIES = [
   { id: 1, name: "All", emoji: "🍽️" },
@@ -308,9 +307,9 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
           <FoodImage image={item.image?.[0]} />
 
         </View>
-        {item?.discount && <View style={styles.discountBadge}>
+        {item?.discount ? <View style={styles.discountBadge}>
           <Text style={styles.discountText}>{item.discount || ""}</Text>
-        </View>}
+        </View> : <></> }
       </View>
 
       {/* Content Section */}
@@ -392,11 +391,11 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
                 activeOpacity={0.7}
               >
                 <Text style={styles.cartIcon}>🛒</Text>
-                {cartCount > 0 && (
+                {cartCount > 0 ? (
                   <View style={styles.cartBadge}>
                     <Text style={styles.cartBadgeText}>{cartCount}</Text>
                   </View>
-                )}
+                ) : <></> }
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.ordersButton}
@@ -601,7 +600,7 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
                 </View>
               </TouchableOpacity>
 
-              {userData?.role === "restaurant_admin" && <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}
+              {userData?.role === "restaurant_admin" ? <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}
                 onPress={() => {
                   setProfileModalVisible(false);
                   setTimeout(() => navigation.push("Restaurant"), 100);
@@ -611,8 +610,8 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
                   <Text style={styles.optionTitle}>My Restaurant</Text>
                   <Text style={styles.optionSubtitle}>Manage Your Foods </Text>
                 </View>
-              </TouchableOpacity>}
-              {userData?.role === "admin" && <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}
+              </TouchableOpacity> :<></> }
+              {userData?.role === "admin" ? <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}
                 onPress={() => {
                   setProfileModalVisible(false);
                   setTimeout(() => navigation.push("ApproveRestaurants"), 100);
@@ -622,7 +621,7 @@ export default function Home({ onLogout, onViewCart, onViewFoodDetails, onViewOr
                   <Text style={styles.optionTitle}>Restaurants List</Text>
                   <Text style={styles.optionSubtitle}>Approve restaurants</Text>
                 </View>
-              </TouchableOpacity>}
+              </TouchableOpacity> :<></> }
 
               {/* <TouchableOpacity style={styles.profileOption} activeOpacity={0.7}>
                 <Text style={styles.optionIcon}>💳</Text>

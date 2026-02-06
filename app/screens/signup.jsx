@@ -116,7 +116,7 @@ const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
 
       <TextInput
         placeholder="Full Name"
-        style={[styles.input, errors.name && { borderColor: "red" }]}
+        style={[styles.input, errors.name ? { borderColor: "red" } : null ]}
         value={name}
         onChangeText={(text) => {
           setName(text);
@@ -124,11 +124,11 @@ const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
         }}
       />
 
-      {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+      {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : <></>}
 
       <TextInput
         placeholder="Mobile Number"
-        style={[styles.input, errors.mobile && { borderColor: "red" }]}
+        style={[styles.input, errors.mobile ? { borderColor: "red" } : null ]}
         value={mobile}
         onChangeText={(text) => {
           setMobile(text.replace(/[^0-9]/g, ""));
@@ -138,13 +138,13 @@ const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
         maxLength={10}
       />
 
-      {errors.mobile && (
+      {errors.mobile ? (
         <Text style={styles.errorText}>{errors.mobile}</Text>
-      )}
+      ): <></>}
 
       <TextInput
         placeholder="hello@gmail.com"
-        style={[styles.input, errors.email && { borderColor: "red" }]}
+        style={[styles.input, errors.email ? { borderColor: "red" } : null ]}
         value={email}
         onChangeText={(text) => {
           setEmail(text);
@@ -153,12 +153,12 @@ const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
         keyboardType="email-address"
       />
 
-      {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+      {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : <></>}
 
       <View
         style={[
           styles.passwordContainer,
-          errors.password && { borderColor: "red" },
+          errors.password ? { borderColor: "red" } : null,
         ]}
       >
         <TextInput
@@ -181,12 +181,12 @@ const SignupScreen = ({ navigation, onNavigateLogin, onNavigateHome }) => {
         </TouchableOpacity>
       </View>
 
-      {errors.password && (
+      {errors.password ? (
         <Text style={styles.errorText}>{errors.password}</Text>
-      )}
+      ):<></>}
 
       <TouchableOpacity
-        style={[styles.button, loading && { opacity: 0.6 }]}
+        style={[styles.button, loading ? { opacity: 0.6 }: null ]}
         onPress={handleSignUp}
         disabled={loading}
       >

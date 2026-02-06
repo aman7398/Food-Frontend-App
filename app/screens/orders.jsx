@@ -10,8 +10,7 @@ import {
 import axios from "axios";
 import { useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const BASE_URL = 'http://localhost:5000/api/v1'
+import { BASE_URL } from "app/api/lib";
 
 const SAMPLE_ORDERS = [
     {
@@ -144,8 +143,8 @@ export default function Orders({ onClose, onReorder }) {
                     <Text
                         style={[
                             styles.statusText,
-                            item.status === "Delivered" && styles.statusDelivered,
-                            item.status === "Cancelled" && styles.statusCancelled,
+                            item.status === "Delivered" ? styles.statusDelivered : null,
+                            item.status === "Cancelled" ? styles.statusCancelled : null,
                         ]}
                     >
                         {item.status === "Delivered" ? "✓" : item.status === "Cancelled" ? "✕" : "⏳"}
@@ -171,14 +170,14 @@ export default function Orders({ onClose, onReorder }) {
                     <View style={styles.statItem}>
                         <Text style={styles.statLabel}>{item.delivery_time}</Text>
                     </View>
-                    {item.rating && (
+                    {item.rating ? (
                         <>
                             <View style={styles.statDivider} />
                             <View style={styles.statItem}>
                                 <Text style={styles.statLabel}>⭐ {item.rating}</Text>
                             </View>
                         </>
-                    )}
+                    ) :<></> }
                 </View>
             </View>
         </TouchableOpacity>
@@ -206,7 +205,7 @@ export default function Orders({ onClose, onReorder }) {
                         key={status}
                         style={[
                             styles.filterButton,
-                            filterStatus === status && styles.filterButtonActive,
+                            filterStatus === status ? styles.filterButtonActive : null ,
                         ]}
                         onPress={() => setFilterStatus(status)}
                         activeOpacity={0.7}
@@ -214,7 +213,7 @@ export default function Orders({ onClose, onReorder }) {
                         <Text
                             style={[
                                 styles.filterText,
-                                filterStatus === status && styles.filterTextActive,
+                                filterStatus === status ? styles.filterTextActive : null ,
                             ]}
                         >
                             {status}
@@ -251,7 +250,7 @@ export default function Orders({ onClose, onReorder }) {
 
 
             {/* Order Details Modal */}
-            {selectedOrder && (
+            {selectedOrder ? (
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         {/* Modal Header */}
@@ -322,8 +321,8 @@ export default function Orders({ onClose, onReorder }) {
                                         <View
                                             style={[
                                                 styles.timelineMarker,
-                                                selectedOrder.status === "Delivered" &&
-                                                styles.timelineMarkerActive,
+                                                selectedOrder.status === "Delivered" ?
+                                                styles.timelineMarkerActive : null,
                                             ]}
                                         >
                                             <Text style={styles.timelineIcon}>
@@ -354,7 +353,7 @@ export default function Orders({ onClose, onReorder }) {
 
                             {/* Actions */}
                             <View style={styles.modalActions}>
-                                {selectedOrder.status === "Delivered" && (
+                                {selectedOrder.status === "Delivered" ? (
                                     <TouchableOpacity
                                         style={styles.actionButton}
                                         onPress={() => {
@@ -365,7 +364,7 @@ export default function Orders({ onClose, onReorder }) {
                                     >
                                         <Text style={styles.actionButtonText}>🔄 Reorder</Text>
                                     </TouchableOpacity>
-                                )}
+                                ) : <></>}
 
                                 <TouchableOpacity
                                     style={[styles.actionButton, styles.actionButtonSecondary]}
@@ -378,7 +377,7 @@ export default function Orders({ onClose, onReorder }) {
                         </ScrollView>
                     </View>
                 </View>
-            )}
+            ) :<></> }
         </View>
     );
 }

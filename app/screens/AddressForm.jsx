@@ -10,8 +10,8 @@ import {
     ScrollView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BASE_URL } from "app/api/lib";
 
-const BASE_URL = "http://localhost:5000/api/v1";
 
 export default function AddressForm({ navigation, route }) {
     const editAddress = route?.params?.address || null;
@@ -167,7 +167,10 @@ export default function AddressForm({ navigation, route }) {
             </View>
 
             <TouchableOpacity
-                style={[styles.button, loading && { opacity: 0.6 }]}
+                style={[
+                    styles.button,
+                    loading ? { opacity: 0.6 } : null
+                ]}
                 onPress={handleSubmit}
                 disabled={loading}
             >
