@@ -52,9 +52,10 @@ export default function LoginScreen() {
       Alert.alert("Success", "Login successful");
 
       // navigate to Home
-      navigation.replace("Home");
+      // navigation.replace("Home");
 
     } catch (error) {
+      console.log("LOGIN ERROR 👉", error);
       Alert.alert(
         "Login Failed",
         error?.response?.data?.message || "Something went wrong"
@@ -97,7 +98,7 @@ export default function LoginScreen() {
       </View>
 
       <TouchableOpacity
-        style={[styles.loginButton, loading ? { opacity: 0.6 } : null ]}
+        style={[styles.loginButton, loading ? { opacity: 0.6 } : null]}
         onPress={handleLogin}
         disabled={loading}
       >

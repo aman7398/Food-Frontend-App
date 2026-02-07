@@ -26,8 +26,8 @@ const VerifyOtpScreen = ({ route, navigation }) => {
 
             const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
                 method: "POST",
-                headers:{
-                    'Content-Type':"application/json"
+                headers: {
+                    'Content-Type': "application/json"
                 },
                 body: JSON.stringify({ email, otp })
             });
@@ -40,7 +40,7 @@ const VerifyOtpScreen = ({ route, navigation }) => {
             await AsyncStorage.setItem("token", resData.token);
             await AsyncStorage.setItem("userData", JSON.stringify(resData.user));
 
-            navigation.replace("Home")
+            // navigation.replace("Home")
 
             Alert.alert("Success", "Account verified successfully", [
                 {
@@ -71,7 +71,7 @@ const VerifyOtpScreen = ({ route, navigation }) => {
             />
 
             <TouchableOpacity
-                style={[styles.button, loading ? { opacity: 0.6 } : null ]}
+                style={[styles.button, loading ? { opacity: 0.6 } : null]}
                 onPress={handleVerifyOtp}
                 disabled={loading}
             >

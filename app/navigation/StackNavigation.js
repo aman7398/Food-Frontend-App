@@ -16,25 +16,30 @@ import AddFoodScreen from "app/screens/AddFood";
 import Orders from "app/screens/orders";
 import ApproveRestaurants from "app/screens/ApproveRestaurantsScreen";
 import Splash from "app/splash";
-
 const Stack = createNativeStackNavigator();
 
 export default function StackNavigation() {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const loadToken = async () => {
+    const t = await AsyncStorage.getItem("token");
+    setToken(t);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    AsyncStorage.getItem("token").then(t => {
-      setToken(t);
-      setLoading(false);
-    });
-    console.log("Address screen mounted");
+    loadToken();
+
+    // 🔁 LISTEN STORAGE CHANGES
+    const interval = setInterval(loadToken, 500);
+
+    return () => clearInterval(interval);
   }, []);
 
   function AuthStack() {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="OtpVerify" component={VerifyOtpScreen} />
@@ -58,12 +63,11 @@ export default function StackNavigation() {
     );
   }
 
-
-  if (loading) return null;
+  if (loading) return <Splash />;
 
   return (
     <NavigationContainer>
-      {!!token ? <AppStack /> : <AuthStack />}
+      {token ? <AppStack /> : <AuthStack />}
     </NavigationContainer>
   );
 }

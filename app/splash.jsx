@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Image, Animated } from 'react-native';
 import * as SplashScreenModule from 'expo-splash-screen';
-import App from './index'; // Import the full app with navigation
+import App from './index';
 import Brand from '../assets/brand.png';
 
 SplashScreenModule.preventAutoHideAsync();
@@ -11,15 +11,12 @@ export default function Splash() {
   const translateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Logo bounce animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(translateY, { toValue: -20, duration: 800, useNativeDriver: true }),
         Animated.timing(translateY, { toValue: 0, duration: 800, useNativeDriver: true }),
       ])
     ).start();
-
-    // 3 seconds ke baad home page show karo
     const timer = setTimeout(async () => {
       console.log("Loading app")
       await SplashScreenModule.hideAsync();
@@ -29,30 +26,28 @@ export default function Splash() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleLoginNavigateHome = () => {
-    console.log("User logged in, navigating to home");
-    setShowApp(true);
-  };
+  // const handleLoginNavigateHome = () => {
+  //   console.log("User logged in, navigating to home");
+  //   setShowApp(true);
+  // };
 
-  const handleLoginNavigateSignup = () => {
-    console.log("User navigating to signup");
-  };
+  // const handleLoginNavigateSignup = () => {
+  //   console.log("User navigating to signup");
+  // };
 
-  const handleSignupNavigateHome = () => {
-    console.log("User signed up, navigating to home");
-    setShowApp(true);
-  };
+  // const handleSignupNavigateHome = () => {
+  //   console.log("User signed up, navigating to home");
+  //   setShowApp(true);
+  // };
 
-  const handleSignupNavigateLogin = () => {
-    console.log("User going back to login from signup");
-  };
+  // const handleSignupNavigateLogin = () => {
+  //   console.log("User going back to login from signup");
+  // };
 
-  const handleLogout = () => {
-    console.log("User logged out, navigating to login");
-    setShowApp(false);
-  };
-
-  // If splash screen should show, display it
+  // const handleLogout = () => {
+  //   console.log("User logged out, navigating to login");
+  //   setShowApp(false);
+  // };
   if (!showApp) {
     return (
       <View style={styles.container}>
@@ -61,8 +56,6 @@ export default function Splash() {
       </View>
     );
   }
-
-  // Otherwise show the full app with all navigation
   return <App />;
 }
 
