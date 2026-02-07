@@ -1,1 +1,2 @@
-export const BASE_URL = "https://automatic-parakeet-x55r66w46pvrc6r94-5000.app.github.dev/api/v1"
+// export const BASE_URL = "https://automatic-parakeet-x55r66w46pvrc6r94-5000.app.github.dev/api/v1"
+export const BASE_URL = "https://localhost:5000/api/v1"

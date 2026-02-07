@@ -15,6 +15,7 @@ import Restaurant from "app/screens/Restaurant";
 import AddFoodScreen from "app/screens/AddFood";
 import Orders from "app/screens/orders";
 import ApproveRestaurants from "app/screens/ApproveRestaurantsScreen";
+import Splash from "app/splash";
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +34,7 @@ export default function StackNavigation() {
   function AuthStack() {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="OtpVerify" component={VerifyOtpScreen} />
